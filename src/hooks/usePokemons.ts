@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import { fetchPokemons } from "../service/pokeApi";
 
-export default function usePokemons() {
+export default async function usePokemons() {
   const [pokemons, setPokemons] = useState<string[]>([]);
   const [offset, setOffset] = useState<number>(0);
-  const [loading, setloading] = useState<boolean>(false);
-
+  const [loading, setLoading] = useState<boolean>(false);
   const LIMIT = 20;
+
   useEffect(() => {
     loadMore();
   }, [offset]);
 
-  const loadMore = async () => {
-    setloading(true);
+  async function loadMore() {
+     setLoading(true)
     try {
       const data = await fetchPokemons(LIMIT, offset);
       const enriched = data.results.map((poke: any, index: number) => {
@@ -25,11 +25,10 @@ export default function usePokemons() {
       });
       setPokemons((prev) => [...prev, ...enriched]);
     } catch (error) {
-      console.error(error);
     } finally {
-      setloading(false);
+      setLoading(false);
     }
-  };
+  }
 
   return {
     pokemons,
