@@ -1,13 +1,15 @@
 
 
 function App() {
-
+    const pokemons: string[] = ["pikachu", "bulbasaur", "charmander"]
 
     return (
         <>
-            <h1 className="text-3xl font-bold underline text-center cursor-pointer">
-              Mon Pokemon
-            </h1>
+            <div className="max-w-xl mx-auto px-4 space-y-4 mt-32  ">
+                {pokemons.map((poke) => (
+                    <p className="shadow bg-gray-100 py-8 text-center rounded" key={poke}>{poke}</p>
+                ))}
+            </div>
         </>
     )
 }
