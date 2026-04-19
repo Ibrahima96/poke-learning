@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import usePokemons from "./hooks/usePokemons"
 import PokemonCard from "./components/PokemonCard"
 import SearchBar from "./components/SearchBar"
@@ -9,7 +9,7 @@ import type { PokemonItem } from "./types"
 type DisplayedPokemon = PokemonItem & {
   phase: "enter" | "idle" | "exit"
   order: number
-};
+}
 
 const ENTER_DURATION = 420
 const EXIT_DURATION = 260
@@ -19,7 +19,12 @@ function App() {
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<PokemonItem | null>(null)
   const [displayedPokemons, setDisplayedPokemons] = useState<DisplayedPokemon[]>([])
+  const [activeCardId, setActiveCardId] = useState<number | null>(null)
+
   const animationTimers = useRef(new Map<number, number>())
+  const cardRefs = useRef(new Map<number, HTMLButtonElement | null>())
+  const previousRects = useRef(new Map<number, DOMRect>())
+  const clickTimerRef = useRef<number | null>(null)
 
   const filtered = useMemo(
     () =>
@@ -28,6 +33,20 @@ function App() {
       ),
     [pokemons, search],
   )
+
+  const handleCardSelect = (pokemon: PokemonItem) => {
+    setSelected(pokemon)
+    setActiveCardId(pokemon.id)
+
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current)
+    }
+
+    clickTimerRef.current = window.setTimeout(() => {
+      setActiveCardId(null)
+      clickTimerRef.current = null
+    }, 520)
+  }
 
   useEffect(() => {
     setDisplayedPokemons((current) => {
@@ -77,6 +96,43 @@ function App() {
     })
   }, [filtered])
 
+  useLayoutEffect(() => {
+    const nextRects = new Map<number, DOMRect>()
+
+    displayedPokemons.forEach((pokemon) => {
+      const element = cardRefs.current.get(pokemon.id)
+      if (!element) return
+
+      const rect = element.getBoundingClientRect()
+      nextRects.set(pokemon.id, rect)
+
+      const previousRect = previousRects.current.get(pokemon.id)
+      if (!previousRect || pokemon.phase !== "idle") return
+
+      const deltaX = previousRect.left - rect.left
+      const deltaY = previousRect.top - rect.top
+
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return
+
+      element.animate(
+        [
+          {
+            transform: `translate(${deltaX}px, ${deltaY}px)`,
+          },
+          {
+            transform: "translate(0, 0)",
+          },
+        ],
+        {
+          duration: 360,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      )
+    })
+
+    previousRects.current = nextRects
+  }, [displayedPokemons])
+
   useEffect(() => {
     displayedPokemons.forEach((pokemon) => {
       if (pokemon.phase === "enter" && !animationTimers.current.has(pokemon.id)) {
@@ -119,6 +175,10 @@ function App() {
     return () => {
       animationTimers.current.forEach((timer) => window.clearTimeout(timer))
       animationTimers.current.clear()
+
+      if (clickTimerRef.current !== null) {
+        window.clearTimeout(clickTimerRef.current)
+      }
     }
   }, [])
 
@@ -130,8 +190,8 @@ function App() {
         <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-6 shadow-[0_25px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:p-8">
+      <main className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <header className="mb-6 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/8 p-5 shadow-[0_25px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl sm:mb-8 sm:rounded-[2rem] sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-amber-100">
               <span className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
@@ -147,7 +207,7 @@ function App() {
               <p className="text-sm font-semibold uppercase tracking-[0.4em] text-cyan-200/80">
                 Explore ton equipe
               </p>
-              <h1 className="mt-4 max-w-2xl text-4xl font-black leading-none text-white sm:text-6xl">
+              <h1 className="mt-4 max-w-2xl text-4xl font-black leading-none text-white sm:text-5xl lg:text-6xl">
                 Pokedex
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200/80 sm:text-lg">
@@ -177,11 +237,11 @@ function App() {
           </div>
         </header>
 
-        <section className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <section className="mb-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
           <p className="text-sm font-medium uppercase tracking-[0.35em] text-slate-200/70">
             {filtered.length} resultat{filtered.length > 1 ? "s" : ""}
           </p>
-          <p className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-slate-100/80">
+          <p className="w-fit rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-slate-100/80">
             {search ? `Filtre: ${search}` : "Aucun filtre actif"}
           </p>
         </section>
@@ -202,20 +262,28 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="grid items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4 sm:gap-5">
             {displayedPokemons.map((pokemon, index) => (
               <PokemonCard
                 key={pokemon.id}
                 pokemon={pokemon}
                 index={index}
                 phase={pokemon.phase}
-                onClick={setSelected}
+                isActive={activeCardId === pokemon.id}
+                onClick={handleCardSelect}
+                setRef={(element) => {
+                  if (element) {
+                    cardRefs.current.set(pokemon.id, element)
+                  } else {
+                    cardRefs.current.delete(pokemon.id)
+                  }
+                }}
               />
             ))}
           </div>
         )}
 
-        <div className="mt-10">
+        <div className="mt-8 sm:mt-10">
           <LoadMoreButton onClick={loadMore} loading={loading} />
         </div>
       </main>

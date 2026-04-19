@@ -4,7 +4,9 @@ type PokemonCardProps = {
   pokemon: PokemonItem;
   index?: number;
   phase?: "enter" | "idle" | "exit";
+  isActive?: boolean;
   onClick: (pokemon: PokemonItem) => void;
+  setRef?: (element: HTMLButtonElement | null) => void;
 };
 
 const accentBands = [
@@ -18,7 +20,9 @@ export default function PokemonCard({
   pokemon,
   index = 0,
   phase = "idle",
+  isActive = false,
   onClick,
+  setRef,
 }: PokemonCardProps) {
   const band = accentBands[(pokemon.id - 1) % accentBands.length]
   const animationClass =
@@ -30,23 +34,30 @@ export default function PokemonCard({
 
   return (
     <button
+      ref={setRef}
       type="button"
       disabled={phase === "exit"}
       onClick={() => onClick(pokemon)}
       style={{ animationDelay: `${index * 50}ms` }}
-      className={`group relative h-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/95 p-4 text-left text-slate-900 shadow-[0_18px_55px_rgba(15,23,42,0.18)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_28px_80px_rgba(15,23,42,0.28)] ${animationClass}`}
+      className={`group relative h-full overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/95 p-3 text-left text-slate-900 shadow-[0_18px_55px_rgba(15,23,42,0.18)] transition duration-300 hover:-translate-y-2 hover:shadow-[0_28px_80px_rgba(15,23,42,0.28)] sm:rounded-[1.75rem] sm:p-4 ${animationClass} ${
+        isActive ? "animate-card-pop" : ""
+      }`}
     >
       <div className={`absolute inset-x-0 top-0 h-2 bg-gradient-to-r ${band}`} />
       <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-amber-300/25 blur-2xl transition duration-300 group-hover:scale-110" />
       <div className="absolute -bottom-10 -left-8 h-28 w-28 rounded-full bg-sky-300/20 blur-2xl transition duration-300 group-hover:scale-110" />
 
-      <div className="relative flex flex-col items-center gap-4 pt-2">
-        <div className="flex h-28 w-28 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-slate-50 to-slate-100 p-3 shadow-inner">
+      {isActive && (
+        <span className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-4 ring-amber-300/40 animate-card-ripple" />
+      )}
+
+      <div className="relative flex flex-col items-center gap-3 pt-1 sm:gap-4 sm:pt-2">
+        <div className="flex h-24 w-24 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-slate-50 to-slate-100 p-2.5 shadow-inner sm:h-28 sm:w-28 sm:rounded-[1.5rem] sm:p-3">
           <div className="flex h-full w-full items-center justify-center rounded-[1.25rem] bg-white">
             <img
               src={pokemon.image}
               alt={pokemon.name}
-              className="h-24 w-24 object-contain drop-shadow-[0_12px_25px_rgba(15,23,42,0.2)] transition duration-300 group-hover:scale-110"
+              className="h-20 w-20 object-contain drop-shadow-[0_12px_25px_rgba(15,23,42,0.2)] transition duration-300 group-hover:scale-110 sm:h-24 sm:w-24"
             />
           </div>
         </div>
@@ -57,7 +68,7 @@ export default function PokemonCard({
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
                 Pokemon
               </p>
-              <h2 className="mt-2 capitalize text-xl font-black text-slate-900">
+              <h2 className="mt-2 capitalize text-lg font-black text-slate-900 sm:text-xl">
                 {pokemon.name}
               </h2>
             </div>
@@ -66,7 +77,7 @@ export default function PokemonCard({
             </span>
           </div>
 
-          <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-slate-600">
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-slate-600 sm:mt-5 sm:text-xs sm:tracking-[0.28em]">
             Ouvrir la fiche
             <span className="text-sm transition duration-300 group-hover:translate-x-1">
               →
