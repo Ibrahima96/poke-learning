@@ -33,10 +33,10 @@ function App() {
                     className="w-full px-4 rounded py-2 border"
                 />
             </p>
-            <div className="max-w-xl mx-auto px-4 space-y-4 mt-32   ">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4  ">
                 {filtered.map((poke) => (
                 
-                        <div className="shadow bg-gray-100 py-8 text-center rounded justify-center items-center w-full mx-auto">
+                        <div className="shadow bg-gray-100 py-8 text-center rounded justify-center items-center w-sm mx-auto">
                             <p  key={poke.name}>{poke.name}</p>
                             <img className="block mx-auto" src={poke.image} width="80" />
                         </div>
